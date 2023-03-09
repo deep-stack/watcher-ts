@@ -68,22 +68,22 @@ export interface PeerInitConfig {
 }
 
 export class Peer {
-  _node?: Libp2p
-  _peerHeartbeatChecker?: PeerHearbeatChecker
-  _wrtcTransport: (components: WebRTCDirectComponents) => Transport
+  _node?: Libp2p;
+  _peerHeartbeatChecker?: PeerHearbeatChecker;
+  _wrtcTransport: (components: WebRTCDirectComponents) => Transport;
 
-  _relayNodeMultiaddr: Multiaddr
-  _numRelayConnections = 0
+  _relayNodeMultiaddr: Multiaddr;
+  _numRelayConnections = 0;
 
-  _relayRedialInterval?: number
-  _maxRelayConnections?: number
+  _relayRedialInterval?: number;
+  _maxRelayConnections?: number;
 
-  _debugInfoEnabled?: boolean
+  _debugInfoEnabled?: boolean;
 
-_peerStreamMap: Map<string, Pushable<any>> = new Map()
-  _messageHandlers: Array<(peerId: PeerId, message: any) => void> = []
-  _topicHandlers: Map<string, Array<(peerId: PeerId, data: any) => void>> = new Map()
-  _metrics = new PrometheusMetrics()
+  _peerStreamMap: Map<string, Pushable<any>> = new Map();
+  _messageHandlers: Array<(peerId: PeerId, message: any) => void> = [];
+  _topicHandlers: Map<string, Array<(peerId: PeerId, data: any) => void>> = new Map();
+  _metrics = new PrometheusMetrics();
 
   constructor (relayNodeURL: string, nodejs?: boolean) {
     this._relayNodeMultiaddr = multiaddr(relayNodeURL);
