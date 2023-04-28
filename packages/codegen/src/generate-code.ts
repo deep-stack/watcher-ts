@@ -12,7 +12,7 @@ import { Writable } from 'stream';
 import yaml from 'js-yaml';
 import os from 'os';
 
-import { flatten } from '@poanet/solidity-flattener';
+import { merge, plugins } from 'sol-merger';
 import { parse, visit } from '@solidity-parser/parser';
 import { ASTNode } from '@solidity-parser/parser/dist/src/ast-types';
 import { KIND_ACTIVE, KIND_LAZY } from '@cerc-io/util';
@@ -93,8 +93,10 @@ const main = async (): Promise<void> => {
         const response = await fetch(inputFile);
         contractData.contractString = await response.text();
       } else {
+        const licenseRemovePlugin = plugins.SPDXLicenseRemovePlugin;
+        assert(licenseRemovePlugin);
         contractData.contractString = config.flatten
-          ? await flatten(path.resolve(inputFile))
+          ? await merge(path.resolve(inputFile), { exportPlugins: [licenseRemovePlugin] })
           : fs.readFileSync(path.resolve(inputFile)).toString();
       }
 
