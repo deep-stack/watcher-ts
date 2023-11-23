@@ -148,12 +148,6 @@ export interface EthClient {
     addresses?: string[],
     topics?: string[][]
   }): Promise<any>;
-  getLogsForBlockRange?: (vars: {
-    fromBlock?: number,
-    toBlock?: number,
-    addresses?: string[],
-    topics?: string[][]
-  }) => Promise<any>;
 }
 
 export interface IndexerInterface {

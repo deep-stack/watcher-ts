@@ -245,68 +245,22 @@ export class EthClient implements EthClientInterface {
     };
   }
 
-  async getLogs (vars: {
-    blockHash: string,
-    blockNumber: string,
-    addresses?: string[],
-    topics?: string[][]
-  }): Promise<any> {
-    console.time(`time:eth-client#getLogs-${JSON.stringify(vars)}`);
-    const result = await this._getLogs({
-      blockHash: vars.blockHash,
-      addresses: vars.addresses,
-      topics: vars.topics
-    });
-    console.timeEnd(`time:eth-client#getLogs-${JSON.stringify(vars)}`);
-
-    return result;
-  }
-
-  async getLogsForBlockRange (vars: {
-    fromBlock?: number,
-    toBlock?: number,
-    addresses?: string[],
-    topics?: string[][]
-  }): Promise<any> {
-    console.time(`time:eth-client#getLogsForBlockRange-${JSON.stringify(vars)}`);
-    const result = await this._getLogs({
-      fromBlock: Number(vars.fromBlock),
-      toBlock: Number(vars.toBlock),
-      addresses: vars.addresses,
-      topics: vars.topics
-    });
-    console.timeEnd(`time:eth-client#getLogsForBlockRange-${JSON.stringify(vars)}`);
-
-    return result;
-  }
-
   // TODO: Implement return type
-  async _getLogs (vars: {
+  async getLogs (vars: {
     blockHash?: string,
     fromBlock?: number,
     toBlock?: number,
     addresses?: string[],
     topics?: string[][]
   }): Promise<any> {
-    const keyObj = {
-      getLogs: 'getLogs',
-      vars
+    console.time(`time:eth-client#getLogs-${JSON.stringify(vars)}`);
+
+    const fetch = async () => {
+      return getLogs(this._provider, vars);
     };
 
-    // Check if request cached in db, if cache is enabled.
-    if (this._cache) {
-      const [value, found] = await this._cache.get(keyObj) || [undefined, false];
-      if (found) {
-        return value;
-      }
-    }
-
-    const result = await getLogs(this._provider, vars);
-
-    // Cache the result and return it, if cache is enabled.
-    if (this._cache) {
-      await this._cache.put(keyObj, result);
-    }
+    const result = await this._getCachedOrFetch('getLogs', vars, fetch.bind(this._provider));
+    console.timeEnd(`time:eth-client#getLogs-${JSON.stringify(vars)}`);
 
     return result;
   }

@@ -128,9 +128,9 @@ export async function getLogs (
   );
 
   // Format raw eth_getLogs response
-  const formatFunc = providers.Formatter.arrayOf(
-    provider.formatter.filterLog(ethLogs));
-  const logs: providers.Log[] = formatFunc(ethLogs);
+  const logs: providers.Log[] = providers.Formatter.arrayOf(
+    provider.formatter.filterLog.bind(provider.formatter)
+  )(ethLogs);
 
   const result = logs.map((log) => {
     log.address = log.address.toLowerCase();
