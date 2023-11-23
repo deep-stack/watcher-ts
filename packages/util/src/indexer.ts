@@ -33,6 +33,7 @@ import { JobQueue } from './job-queue';
 import { Where, QueryOptions, BlockHeight } from './database';
 import { ServerConfig, UpstreamConfig } from './config';
 import { createOrUpdateStateData, StateDataMeta } from './state-helper';
+import { getLogs } from './eth';
 
 const DEFAULT_MAX_EVENTS_BLOCK_RANGE = 1000;
 
@@ -113,7 +114,7 @@ export class Indexer {
   _db: DatabaseInterface;
   _ethClient: EthClient;
   _getStorageAt: GetStorageAt;
-  _ethProvider: ethers.providers.BaseProvider;
+  _ethProvider: ethers.providers.JsonRpcProvider;
   _jobQueue: JobQueue;
 
   _watchedContracts: { [key: string]: ContractInterface } = {};
@@ -126,7 +127,7 @@ export class Indexer {
     },
     db: DatabaseInterface,
     ethClient: EthClient,
-    ethProvider: ethers.providers.BaseProvider,
+    ethProvider: ethers.providers.JsonRpcProvider,
     jobQueue: JobQueue
   ) {
     this._serverConfig = config.server;
@@ -373,11 +374,9 @@ export class Indexer {
     ethFullBlock: EthFullBlock,
     ethFullTransactions: EthFullTransaction[]
   }[]> {
-    assert(this._ethClient.getLogsForBlockRange, 'getLogsForBlockRange() not implemented in ethClient');
-
     const { addresses, topics } = this._createLogsFilters(eventSignaturesMap);
 
-    const { logs } = await this._ethClient.getLogsForBlockRange({
+    const { logs } = await getLogs(this._ethProvider, {
       fromBlock,
       toBlock,
       addresses,

@@ -6,7 +6,7 @@ import assert from 'assert';
 import { errors, providers, utils } from 'ethers';
 
 import { Cache } from '@cerc-io/cache';
-import { encodeHeader, escapeHexString, EthClient as EthClientInterface, EthFullBlock, EthFullTransaction } from '@cerc-io/util';
+import { encodeHeader, escapeHexString, EthClient as EthClientInterface, EthFullBlock, EthFullTransaction, getLogs } from '@cerc-io/util';
 import { padKey } from '@cerc-io/ipld-eth-client';
 
 const FUTURE_BLOCK_ERROR = "requested a future epoch (beyond 'latest')";
@@ -288,63 +288,27 @@ export class EthClient implements EthClientInterface {
     addresses?: string[],
     topics?: string[][]
   }): Promise<any> {
-    const { blockHash, fromBlock, toBlock, addresses = [], topics } = vars;
-
-    const result = await this._getCachedOrFetch(
-      'getLogs',
-      vars,
-      async () => {
-        const ethLogs = await this._provider.send(
-          'eth_getLogs',
-          [{
-            address: addresses.map(address => address.toLowerCase()),
-            fromBlock: fromBlock && utils.hexValue(fromBlock),
-            toBlock: toBlock && utils.hexValue(toBlock),
-            blockHash,
-            topics
-          }]
-        );
-
-        // Format raw eth_getLogs response
-        const logs: providers.Log[] = providers.Formatter.arrayOf(
-          this._provider.formatter.filterLog.bind(this._provider.formatter)
-        )(ethLogs);
-
-        return logs.map((log) => {
-          log.address = log.address.toLowerCase();
-          return log;
-        });
-      }
-    );
-
-    const txHashesSet = result.reduce((acc, log) => {
-      acc.add(log.transactionHash);
-      return acc;
-    }, new Set<string>());
-
-    const txReceipts = await Promise.all(Array.from(txHashesSet).map(txHash => this._provider.getTransactionReceipt(txHash)));
-
-    const txReceiptMap = txReceipts.reduce((acc, txReceipt) => {
-      acc.set(txReceipt.transactionHash, txReceipt);
-      return acc;
-    }, new Map<string, providers.TransactionReceipt>());
-
-    return {
-      logs: result.map((log) => ({
-        // blockHash required for sorting logs fetched in a block range
-        blockHash: log.blockHash,
-        account: {
-          address: log.address
-        },
-        transaction: {
-          hash: log.transactionHash
-        },
-        topics: log.topics,
-        data: log.data,
-        index: log.logIndex,
-        status: txReceiptMap.get(log.transactionHash)?.status
-      }))
+    const keyObj = {
+      getLogs: 'getLogs',
+      vars
     };
+
+    // Check if request cached in db, if cache is enabled.
+    if (this._cache) {
+      const [value, found] = await this._cache.get(keyObj) || [undefined, false];
+      if (found) {
+        return value;
+      }
+    }
+
+    const result = await getLogs(this._provider, vars);
+
+    // Cache the result and return it, if cache is enabled.
+    if (this._cache) {
+      await this._cache.put(keyObj, result);
+    }
+
+    return result;
   }
 
   async _getCachedOrFetch<Result> (queryName: string, vars: Vars, fetch: () => Promise<Result>): Promise<Result> {

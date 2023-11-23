@@ -1,5 +1,5 @@
 import debug from 'debug';
-import { utils } from 'ethers';
+import { providers, utils } from 'ethers';
 
 const log = debug('vulcanize:eth');
 
@@ -101,4 +101,68 @@ export function decodeData (hexLiteral: string): Uint8Array {
 export function escapeHexString (hex: string): string {
   const value = hex.slice(2);
   return `\\x${value}`;
+}
+
+export async function getLogs (
+  provider: providers.JsonRpcProvider,
+  vars: {
+    blockHash?: string,
+    fromBlock?: number,
+    toBlock?: number,
+    addresses?: string[],
+    topics?: string[][]
+  }
+): Promise<any> {
+  const { blockHash, fromBlock, toBlock, addresses = [], topics } = vars;
+
+  // ether.js v5 provider.getLogs doesnot accept array of address
+  const ethLogs = await provider.send(
+    'eth_getLogs',
+    [{
+      address: addresses.map(address => address.toLowerCase()),
+      fromBlock: fromBlock && utils.hexValue(fromBlock),
+      toBlock: toBlock && utils.hexValue(toBlock),
+      blockHash,
+      topics
+    }]
+  );
+
+  // Format raw eth_getLogs response
+  const formatFunc = providers.Formatter.arrayOf(
+    provider.formatter.filterLog(ethLogs));
+  const logs: providers.Log[] = formatFunc(ethLogs);
+
+  const result = logs.map((log) => {
+    log.address = log.address.toLowerCase();
+    return log;
+  });
+
+  const txHashesSet = result.reduce((acc, log) => {
+    acc.add(log.transactionHash);
+    return acc;
+  }, new Set<string>());
+
+  const txReceipts = await Promise.all(Array.from(txHashesSet).map(txHash => provider.getTransactionReceipt(txHash)));
+
+  const txReceiptMap = txReceipts.reduce((acc, txReceipt) => {
+    acc.set(txReceipt.transactionHash, txReceipt);
+    return acc;
+  }, new Map<string, providers.TransactionReceipt>());
+
+  return {
+    logs: result.map((log) => ({
+      // blockHash required for sorting logs fetched in a block range
+      blockHash: log.blockHash,
+      account: {
+        address: log.address
+      },
+      transaction: {
+        hash: log.transactionHash
+      },
+      topics: log.topics,
+      data: log.data,
+      index: log.logIndex,
+      status: txReceiptMap.get(log.transactionHash)?.status
+    }))
+  };
 }
