@@ -115,7 +115,7 @@ export async function getLogs (
 ): Promise<any> {
   const { blockHash, fromBlock, toBlock, addresses = [], topics } = vars;
 
-  // ether.js v5 provider.getLogs doesnot accept array of address
+  // ether.js v5 provider.getLogs does not accept array of addresses, use a raw query instead
   const ethLogs = await provider.send(
     'eth_getLogs',
     [{

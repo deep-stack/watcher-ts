@@ -376,6 +376,7 @@ export class Indexer {
   }[]> {
     const { addresses, topics } = this._createLogsFilters(eventSignaturesMap);
 
+    // Call util.getLogs as eth-client getLogs does not support block range params
     const { logs } = await getLogs(this._ethProvider, {
       fromBlock,
       toBlock,

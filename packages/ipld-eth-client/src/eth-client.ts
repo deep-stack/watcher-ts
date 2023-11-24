@@ -134,6 +134,7 @@ export class EthClient implements EthClientInterface {
   }
 
   // TODO: Support filtering logs using topics
+  // TODO: Support filtering for block range
   async getLogs (vars: Vars): Promise<any> {
     console.time(`time:eth-client#getLogs-${JSON.stringify(vars)}`);
     const result = await this._getCachedOrFetch('getLogs', vars);

@@ -24,8 +24,6 @@ interface Vars {
   slot?: string;
   addresses?: string[];
   topics?: string[][];
-  fromBlock?: number;
-  toBlock?: number;
 }
 
 export class EthClient implements EthClientInterface {
@@ -247,16 +245,19 @@ export class EthClient implements EthClientInterface {
 
   // TODO: Implement return type
   async getLogs (vars: {
-    blockHash?: string,
-    fromBlock?: number,
-    toBlock?: number,
+    blockHash: string,
+    blockNumber: string,
     addresses?: string[],
     topics?: string[][]
   }): Promise<any> {
     console.time(`time:eth-client#getLogs-${JSON.stringify(vars)}`);
 
     const fetch = async () => {
-      return getLogs(this._provider, vars);
+      return getLogs(this._provider, {
+        ...vars,
+        fromBlock: Number(vars.blockNumber),
+        toBlock: Number(vars.blockNumber)
+      });
     };
 
     const result = await this._getCachedOrFetch('getLogs', vars, fetch.bind(this._provider));

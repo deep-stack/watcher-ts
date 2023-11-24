@@ -14,7 +14,7 @@ import { SelectionNode } from 'graphql';
 {{/if}}
 
 import { JsonFragment } from '@ethersproject/abi';
-import { BaseProvider } from '@ethersproject/providers';
+import { JsonRpcProvider } from '@ethersproject/providers';
 import { MappingKey, StorageLayout } from '@cerc-io/solidity-mapper';
 import {
   Indexer as BaseIndexer,
@@ -91,7 +91,7 @@ const {{capitalize event}}_EVENT = '{{event}}';
 export class Indexer implements IndexerInterface {
   _db: Database;
   _ethClient: EthClient;
-  _ethProvider: BaseProvider;
+  _ethProvider: JsonRpcProvider;
   _baseIndexer: BaseIndexer;
   _serverConfig: ServerConfig;
   _upstreamConfig: UpstreamConfig;
@@ -118,7 +118,7 @@ export class Indexer implements IndexerInterface {
     },
     db: DatabaseInterface,
     clients: Clients,
-    ethProvider: BaseProvider,
+    ethProvider: JsonRpcProvider,
     jobQueue: JobQueue{{#if (subgraphPath)}},{{/if}}
     {{#if (subgraphPath)}}
     graphWatcher?: GraphWatcherInterface
