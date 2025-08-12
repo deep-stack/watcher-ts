@@ -65,8 +65,9 @@ export class Visitor {
     const name = node.name;
     assert(name);
 
-    const params = node.parameters.map((item: any) => {
-      return { name: item.name, type: item.typeName.name };
+    const params = node.parameters.map((item: any, index: number) => {
+      const itemName = item.name ?? `arg${index}`;
+      return { name: itemName, type: item.typeName.name };
     });
 
     let errorMessage = '';
